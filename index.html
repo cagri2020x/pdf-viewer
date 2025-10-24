@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  < мета charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PDF Arşiv Sistemi</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background: #f4f6f9;
+      color: #333;
+      line-height: 1.6;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    h1 {
+      color: #2c3e50;
+      margin-bottom: 10px;
+      font-size: 2rem;
+    }
+
+    .search-box {
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    #searchInput {
+      width: 100%;
+      max-width: 600px;
+      padding: 14px 20px;
+      font-size: 1.1rem;
+      border: 2px solid #ddd;
+      border-radius: 50px;
+      outline: none;
+      transition: all 0.3s;
+    }
+
+    #searchInput:focus {
+      border-color: #3498db;
+      box-shadow: 0 0 10px rgba(52, 152, 219, 0.2);
+    }
+
+    .folder-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .folder-item {
+      background: white;
+      border-radius: 12px;
+      padding: 18px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .folder-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
+
+    .folder-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 12px;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+
+    .folder-icon {
+      font-size: 1.4rem;
+      margin-right: 10px;
+    }
+
+    .folder-name {
+      font-size: 1.1rem;
+    }
+
+    .pdf-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .pdf-item {
+      flex: 1 1 280px;
+    }
+
+    .pdf-link {
+      display: flex;
+      align-items: center;
+      padding: 10px 14px;
+      background: #eef5fc;
+      border-radius: 8px;
+      text-decoration: none;
+      color: #2c3e50;
+      font-size: 0.95rem;
+      transition: all 0.2s;
+      border: 1px solid #d0e4f7;
+    }
+
+    .pdf-link:hover {
+      background: #3498db;
+      color: white;
+      transform: translateX(4px);
+    }
+
+    .pdf-icon {
+      margin-right: 8px;
+      font-size: 1.1rem;
+    }
+
+    .pdf-name {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 220px;
+    }
+
+    .download-icon {
+      margin-left: auto;
+      font-size: 0.9rem;
+      opacity: 0.7;
+    }
+
+    .no-results {
+      text-align: center;
+      padding: 40px;
+      color: #7f8c8d;
+      font-size: 1.1rem;
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      .pdf-link {
+        font-size: 0.9rem;
+      }
+      .pdf-name {
+        max-width: 160px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>PDF Arşiv Sistemi</h1>
+      <p>Yüzlerce klasör ve binlerce PDF'e hızlı erişim</p>
+    </header>
+
+    <div class="search-box">
+      <input 
+        type="text" 
+        id="searchInput" 
+        placeholder="Klasör adı veya PDF ismi ile ara..." 
+        autocomplete="off"
+      />
+    </div>
+
+    <div id="folderList" class="folder-list">
+      <!-- JavaScript ile burası doldurulacak -->
+    </div>
+
+    <div id="noResults" class="no-results">
+      Arama kriterine uygun dosya bulunamadı.
+    </div>
+  </div>
+
+  <script>
+    // PDF verileri buraya JavaScript ile yüklenecek (data.json)
+    let folders = [];
+
+    // Sayfa yüklendiğinde
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const response = await fetch('data.json');
+        folders = await response.json();
+        renderFolders(folders);
+      } catch (error) {
+        document.getElementById('folderList').innerHTML = 
+          '<p style="text-align:center; color:red;">data.json dosyası yüklenemedi!</p>';
+      }
+
+      // Arama kutusu
+      document.getElementById('searchInput').addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase().trim();
+        const filtered = folders.filter(folder => {
+          const folderMatch = folder.folder.toLowerCase().includes(query);
+          const pdfMatch = folder.pdfs.some(pdf => pdf.toLowerCase().includes(query));
+          return folderMatch || pdfMatch;
+        });
+        renderFolders(filtered);
+        document.getElementById('noResults').style.display = 
+          filtered.length === 0 ? 'block' : 'none';
+      });
+    });
+
+    // Klasörleri ekrana yazdır
+    function renderFolders(folderData) {
+      const container = document.getElementById('folderList');
+      if (folderData.length === 0) {
+        container.innerHTML = '';
+        return;
+      }
+
+      container.innerHTML = folderData.map(folder => `
+        <div class="folder-item">
+          <div class="folder-header">
+            <span class="folder-icon">Klasör</span>
+            <span class="folder-name">${escapeHtml(folder.folder)}</span>
+          </div>
+          <div class="pdf-list">
+            ${folder.pdfs.map(pdf => `
+              <div class="pdf-item">
+                <a href="pdfs/${folder.folder}/${pdf}" class="pdf-link" target="_blank" download>
+                  <span class="pdf-icon">PDF</span>
+                  <span class="pdf-name">${escapeHtml(pdf)}</span>
+                  <span class="download-icon">İndir</span>
+                </a>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Güvenlik: HTML kaçış
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>
